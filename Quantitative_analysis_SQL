@@ -1,0 +1,29 @@
+#using subquerying, WHEN CASE, and JOIN to analyze the warehouse dataset
+#Quantitative analysis to find the major contributing warehouses
+#Warehouse.warehouse_id = Orders.warehouseid
+
+    SELECT
+      Warehouse.warehouse_id,
+      concat(state, ' : ', warehouse_alias) as warehouse_name,
+      count(orders.order_id) as num_orders,
+      (
+        SELECT
+          count(*)
+        FROM Orders
+      ) as total_orders,
+      CASE
+        WHEN (count(Orders.order_id))/(SELECT count(*) FROM Orders) <= 0.20    THEN 'fullfilled upto 20% of orders'
+        WHEN (count(Orders.order_id))/(SELECT count(*) FROM Orders) > 0.20
+        AND (count(Orders.order_id))/(SELECT count(*) FROM Orders) <= 0.60   THEN 'fullfilled upto 60% of orders'
+        ELSE 'fulfilled more than 60% of orders'
+      END  AS Fulfillment
+    FROM 
+        Warehouse
+      LEFT JOIN
+        Orders
+      ON 
+        Warehouse.warehouse_id = Orders.warehouse_id
+    GROUP BY
+      Warehouse.warehouse_id, warehouse_name
+    HAVING 
+      num_orders>0
